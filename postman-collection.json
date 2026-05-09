@@ -1,0 +1,252 @@
+{
+  "info": {
+    "_postman_id": "concert-ticket-platform-v1",
+    "name": "Concert Ticket Booking Platform",
+    "description": "API collection for the Concert Ticket Booking Platform. Run docker-compose up -d then npm run start:dev before testing.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000", "type": "string" },
+    { "key": "concertId", "value": "", "type": "string" },
+    { "key": "bookingId", "value": "", "type": "string" },
+    { "key": "categoryId", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "🎵 Concerts — Customer",
+      "item": [
+        {
+          "name": "Browse published concerts",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/concerts?page=1&limit=10", "host": ["{{baseUrl}}"], "path": ["concerts"], "query": [{"key":"page","value":"1"},{"key":"limit","value":"10"}] }
+          }
+        },
+        {
+          "name": "Get concert details",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/concerts/{{concertId}}", "host": ["{{baseUrl}}"], "path": ["concerts","{{concertId}}"] }
+          }
+        },
+        {
+          "name": "Check ticket availability",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/concerts/{{concertId}}/availability", "host": ["{{baseUrl}}"], "path": ["concerts","{{concertId}}","availability"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🎟️ Bookings — Customer",
+      "item": [
+        {
+          "name": "Create booking (with voucher + idempotency key)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.id) pm.collectionVariables.set('bookingId', res.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/bookings", "host": ["{{baseUrl}}"], "path": ["bookings"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerName\": \"Nguyen Van A\",\n  \"customerEmail\": \"nguyenvana@email.com\",\n  \"customerPhone\": \"0901234567\",\n  \"items\": [\n    {\n      \"ticketCategoryId\": \"{{categoryId}}\",\n      \"quantity\": 2\n    }\n  ],\n  \"voucherCode\": \"LAUNCH2026\",\n  \"idempotencyKey\": \"test-booking-001\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Create booking (simple, no voucher)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/bookings", "host": ["{{baseUrl}}"], "path": ["bookings"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerName\": \"Tran Thi B\",\n  \"customerEmail\": \"tranthib@email.com\",\n  \"items\": [\n    {\n      \"ticketCategoryId\": \"{{categoryId}}\",\n      \"quantity\": 1\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Track booking status",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/bookings/{{bookingId}}", "host": ["{{baseUrl}}"], "path": ["bookings","{{bookingId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🎫 Vouchers — Customer",
+      "item": [
+        {
+          "name": "Validate voucher LAUNCH2026",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/vouchers/validate/LAUNCH2026", "host": ["{{baseUrl}}"], "path": ["vouchers","validate","LAUNCH2026"] }
+          }
+        },
+        {
+          "name": "Validate voucher FLASHSALE500",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/vouchers/validate/FLASHSALE500", "host": ["{{baseUrl}}"], "path": ["vouchers","validate","FLASHSALE500"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🛠️ Admin — Concerts",
+      "item": [
+        {
+          "name": "List all concerts (admin)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/admin/concerts?page=1&limit=20", "host": ["{{baseUrl}}"], "path": ["admin","concerts"], "query": [{"key":"page","value":"1"},{"key":"limit","value":"20"}] }
+          }
+        },
+        {
+          "name": "Create concert (DRAFT)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.id) pm.collectionVariables.set('concertId', res.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/admin/concerts", "host": ["{{baseUrl}}"], "path": ["admin","concerts"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Artist Live 2026\",\n  \"venue\": \"Hanoi Opera House\",\n  \"eventDate\": \"2026-11-01T19:00:00Z\",\n  \"artist\": \"Test Artist\",\n  \"genre\": \"Pop\",\n  \"description\": \"An incredible evening of music.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Add ticket category to concert",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.id) pm.collectionVariables.set('categoryId', res.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/admin/concerts/{{concertId}}/ticket-categories", "host": ["{{baseUrl}}"], "path": ["admin","concerts","{{concertId}}","ticket-categories"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Standard\",\n  \"price\": 1500000,\n  \"totalQuantity\": 1000,\n  \"description\": \"General admission\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Publish concert",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/admin/concerts/{{concertId}}/status", "host": ["{{baseUrl}}"], "path": ["admin","concerts","{{concertId}}","status"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"status\": \"PUBLISHED\" }"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🛠️ Admin — Bookings",
+      "item": [
+        {
+          "name": "List all bookings",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/admin/bookings?page=1&limit=20", "host": ["{{baseUrl}}"], "path": ["admin","bookings"], "query": [{"key":"page","value":"1"},{"key":"limit","value":"20"}] }
+          }
+        },
+        {
+          "name": "List PENDING bookings",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/admin/bookings?status=PENDING", "host": ["{{baseUrl}}"], "path": ["admin","bookings"], "query": [{"key":"status","value":"PENDING"}] }
+          }
+        },
+        {
+          "name": "Update booking status → PAID",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/admin/bookings/{{bookingId}}/status", "host": ["{{baseUrl}}"], "path": ["admin","bookings","{{bookingId}}","status"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"status\": \"PAID\" }"
+            }
+          }
+        },
+        {
+          "name": "Update booking status → CANCELLED",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/admin/bookings/{{bookingId}}/status", "host": ["{{baseUrl}}"], "path": ["admin","bookings","{{bookingId}}","status"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"status\": \"CANCELLED\", \"reason\": \"Customer request\" }"
+            }
+          }
+        },
+        {
+          "name": "Dashboard stats",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/admin/dashboard/stats", "host": ["{{baseUrl}}"], "path": ["admin","dashboard","stats"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🛠️ Admin — Vouchers",
+      "item": [
+        {
+          "name": "List all vouchers",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/admin/vouchers?page=1&limit=20", "host": ["{{baseUrl}}"], "path": ["admin","vouchers"] }
+          }
+        },
+        {
+          "name": "Create voucher campaign",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/admin/vouchers", "host": ["{{baseUrl}}"], "path": ["admin","vouchers"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"NEWVOUCHER50\",\n  \"discountType\": \"FIXED_AMOUNT\",\n  \"discountValue\": 50000,\n  \"minOrderAmount\": 300000,\n  \"totalLimit\": 500,\n  \"validFrom\": \"2026-01-01T00:00:00Z\",\n  \"validUntil\": \"2026-12-31T23:59:59Z\"\n}"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
